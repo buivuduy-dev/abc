@@ -3,37 +3,29 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vocab Master Pro v3.2</title>
+    <title>Vocab Master Pro - Cloud Edition</title>
+    <!-- Thư viện kết nối máy chủ Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
             --bg-color: #0f172a; --card-bg: #1e293b; --primary: #3b82f6; 
             --success: #10b981; --warning: #f59e0b; --danger: #ef4444; --purple: #8b5cf6;
             --text-main: #f8fafc; --text-muted: #94a3b8; --border: #334155;
         }
-
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', system-ui, sans-serif; }
         body { background-color: var(--bg-color); color: var(--text-main); line-height: 1.6; padding-bottom: 40px; }
-
-        /* Navigation */
         nav { background-color: var(--card-bg); padding: 15px 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 100; }
         nav h1 { font-size: 20px; color: var(--primary); font-weight: bold; cursor: pointer;}
         .nav-btn { background: transparent; border: 1px solid var(--primary); color: var(--primary); padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: all 0.2s;}
         .nav-btn:hover { background: var(--primary); color: white; }
-
-        /* View Management */
         .container { max-width: 800px; margin: 0 auto; padding: 20px; }
         .view { display: none; animation: fadeIn 0.3s ease-in-out; }
         .view.active { display: block; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* Dashboard & Buttons */
         .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; margin-top: 20px; }
         .topic-card { background: var(--card-bg); border: 1px solid var(--border); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; justify-content: space-between; position: relative;}
-        .topic-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; padding-right: 30px;}
+        .topic-title { font-size: 18px; font-weight: bold; margin-bottom: 8px; }
         .topic-stats { color: var(--text-muted); font-size: 14px; margin-bottom: 20px; }
-        .btn-delete-topic { position: absolute; top: 15px; right: 15px; background: transparent; border: none; color: var(--danger); cursor: pointer; font-size: 18px; opacity: 0.7; transition: 0.2s;}
-        .btn-delete-topic:hover { opacity: 1; transform: scale(1.1);}
-        
         .action-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
         .btn { padding: 10px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; text-align: center; transition: transform 0.1s; }
         .btn:active { transform: scale(0.96); }
@@ -41,26 +33,18 @@
         .btn-typing { background: var(--purple); }
         .btn-quiz { background: var(--warning); }
         .btn-manage { background: transparent; color: var(--text-muted); border: 1px solid var(--border); width: 100%; }
-
-        /* General Forms & Lists (Manager) */
         .input-group { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; background: var(--card-bg); padding: 20px; border-radius: 12px; }
         input[type="text"] { width: 100%; padding: 12px; background: var(--bg-color); border: 1px solid var(--border); color: white; border-radius: 8px; outline: none; font-size: 16px;}
         input[type="text"]:focus { border-color: var(--primary); }
-        .csv-upload { margin-top: 15px; padding-top: 15px; border-top: 1px dashed var(--border); }
-        
         .word-list { display: flex; flex-direction: column; gap: 10px; margin-top: 20px; }
         .word-item { display: flex; justify-content: space-between; align-items: center; background: var(--card-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border); }
         .word-info strong { display: block; font-size: 16px; color: var(--primary); }
         .word-info span { font-size: 14px; color: var(--text-muted); }
-
-        /* Interactive Modes Shared UI */
         .mode-container { max-width: 500px; margin: 40px auto; text-align: center; }
         .progress-bar { width: 100%; background: var(--card-bg); height: 8px; border-radius: 4px; margin-bottom: 20px; overflow: hidden; }
         .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
         .task-status { font-weight: bold; color: var(--text-muted); margin-bottom: 20px; font-size: 15px; }
         .card-display { background: var(--card-bg); border: 2px solid var(--border); border-radius: 16px; padding: 40px 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); margin-bottom: 20px; }
-
-        /* Typing & Quiz Specific */
         #typing-feedback { min-height: 24px; margin-top: 15px; font-weight: bold; font-size: 16px;}
         .text-success { color: var(--success); }
         .text-danger { color: var(--danger); }
@@ -69,8 +53,6 @@
         .quiz-btn:hover { border-color: var(--primary); }
         .quiz-btn.correct { background: var(--success); border-color: var(--success); color: white; }
         .quiz-btn.wrong { background: var(--danger); border-color: var(--danger); color: white; }
-
-        /* Flashcard Specific */
         .flashcard { width: 100%; height: 320px; perspective: 1000px; cursor: pointer; margin-bottom: 30px; }
         .flashcard-inner { position: relative; width: 100%; height: 100%; transition: transform 0.5s; transform-style: preserve-3d; }
         .flashcard.flipped .flashcard-inner { transform: rotateY(180deg); }
@@ -78,15 +60,23 @@
         .flashcard-back { transform: rotateY(180deg); background: #283548; }
         .study-controls { display: flex; gap: 15px; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
         .study-controls.visible { opacity: 1; pointer-events: auto; }
+        
+        /* Loading Overlay */
+        #loading-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15,23,42,0.8); display: flex; justify-content: center; align-items: center; z-index: 1000; flex-direction: column;}
+        .spinner { border: 4px solid rgba(255,255,255,0.1); width: 40px; height: 40px; border-radius: 50%; border-left-color: var(--primary); animation: spin 1s linear infinite; margin-bottom: 15px;}
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
-    
-    <!-- THƯ VIỆN KẾT NỐI ĐÁM MÂY -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
+    <!-- Màn hình tải dữ liệu -->
+    <div id="loading-overlay">
+        <div class="spinner"></div>
+        <p style="color: white; font-weight: bold;" id="loading-text">Đang đồng bộ với Đám mây...</p>
+    </div>
+
     <nav>
-        <h1 onclick="switchView('home')">Vocab Master Pro 3.2</h1>
+        <h1 onclick="switchView('home')">Vocab Master Cloud</h1>
         <button class="nav-btn" onclick="switchView('home')">Bảng điều khiển</button>
     </nav>
 
@@ -94,8 +84,8 @@
         <!-- 1. DASHBOARD -->
         <div id="view-home" class="view active">
             <div style="display: flex; justify-content: space-between; align-items: center;">
-                <h2>Chủ đề học tập</h2>
-                <button class="btn btn-study" onclick="createNewTopic()">+ Tạo chủ đề</button>
+                <h2>Chủ đề học tập (Cloud)</h2>
+                <button class="btn btn-study" onclick="fetchDataFromCloud()">🔄 Tải lại dữ liệu</button>
             </div>
             <div class="grid" id="topics-grid"></div>
         </div>
@@ -109,19 +99,15 @@
                 <input type="text" id="inp-word" placeholder="Từ vựng tiếng Anh (VD: Homeostasis)">
                 <input type="text" id="inp-meaning" placeholder="Nghĩa tiếng Việt (VD: Cân bằng nội môi)">
                 <input type="text" id="inp-type" placeholder="Loại từ & Phiên âm (Tùy chọn)">
-                <button class="btn btn-study" onclick="addWordManually()" style="margin-top: 10px;">+ Thêm từ</button>
-                
-                <div class="csv-upload">
-                    <p style="font-size: 14px; color: var(--text-muted); margin-bottom: 10px;">Hoặc tải lên bằng file .CSV (Định dạng: Từ,Nghĩa,Loại)</p>
-                    <input type="file" id="csv-file" accept=".csv" style="color: var(--text-muted);">
-                </div>
+                <button class="btn btn-study" id="btn-add-word" onclick="addWordToCloud()" style="margin-top: 10px;">+ Lưu lên Đám mây</button>
             </div>
             
             <h3>Danh sách từ (<span id="word-count">0</span>)</h3>
             <div class="word-list" id="word-list"></div>
         </div>
 
-        <!-- CÁC CHẾ ĐỘ HỌC TẬP (Flashcard, Typing, Quiz) -->
+        <!-- CÁC CHẾ ĐỘ HỌC (Giữ nguyên giao diện) -->
+        <!-- Flashcard -->
         <div id="view-study" class="view">
             <div class="mode-container">
                 <div class="task-status" id="study-status">Nhiệm vụ: 0/0 từ</div>
@@ -144,6 +130,7 @@
             </div>
         </div>
 
+        <!-- Typing -->
         <div id="view-typing" class="view">
             <div class="mode-container">
                 <div class="task-status" id="typing-status">Ôn tập gõ từ: 0/0</div>
@@ -160,6 +147,7 @@
             </div>
         </div>
 
+        <!-- Quiz -->
         <div id="view-quiz" class="view">
             <div class="mode-container">
                 <div class="task-status" id="quiz-status">Trắc nghiệm: 0/0</div>
@@ -174,25 +162,101 @@
         </div>
     </div>
 
-    <!-- ========================================== -->
-    <!-- SCRIPT 1: LOGIC GIAO DIỆN & TÍNH NĂNG CHÍNH  -->
-    <!-- ========================================== -->
     <script>
-        const DEFAULT_DATA = [
-            {
-                id: 1, name: "Sinh lý học & Giải phẫu",
-                words: [
-                    { id: 101, term: "Homeostasis", meaning: "Cân bằng nội môi", type: "(n)" }
-                ]
+        // ==========================================
+        // CẤU HÌNH API SUPABASE (DÁN THÔNG TIN CỦA BẠN VÀO ĐÂY)
+        // ==========================================
+        const SUPABASE_URL = 'https://sowwoitoluvynqipheit.supabase.co/rest/v1/'; 
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvd3dvaXRvbHV2eW5xaXBoZWl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODMxNzY1NTMsImV4cCI6MjA5ODc1MjU1M30.i1KuZATqJLMdiOBTYGHAKCCFrqamfPp8UOVPx2a0aOU';
+        
+        const { createClient } = supabase;
+        const _supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let cloudData = []; // Mảng chứa dữ liệu kéo từ Đám mây
+        let currentTopicName = null;
+
+        // Trạng thái chung cho trò chơi
+        let activeQueue = [];
+        let totalItems = 0;
+        let completedItems = 0;
+        let currentItem = null;
+
+        // --- 1. HÀM KÉO DỮ LIỆU TỪ MÁY CHỦ ---
+        async function fetchDataFromCloud() {
+            showLoading("Đang tải dữ liệu từ Đám mây...");
+            try {
+                // Tải toàn bộ dữ liệu từ bảng vocab_words
+                const { data, error } = await _supabase.from('vocab_words').select('*');
+                if (error) throw error;
+
+                // Nhóm các từ vựng lại theo Chủ đề (Topic)
+                const topicMap = {};
+                data.forEach(row => {
+                    const tName = row.topic;
+                    if(!topicMap[tName]) topicMap[tName] = { name: tName, words: [] };
+                    topicMap[tName].words.push({
+                        id: row.id,
+                        term: row.term,
+                        meaning: row.meaning,
+                        type: row.type
+                    });
+                });
+
+                cloudData = Object.values(topicMap);
+                hideLoading();
+                renderHome();
+            } catch (err) {
+                hideLoading();
+                alert("Lỗi kết nối Đám mây: " + err.message);
             }
-        ];
+        }
 
-        let db = JSON.parse(localStorage.getItem('vocabAppDBv3')) || DEFAULT_DATA;
-        let currentTopicId = null;
-        let activeQueue = []; let totalItems = 0; let completedItems = 0; let currentItem = null;
+        // --- 2. HÀM ĐẨY TỪ MỚI LÊN MÁY CHỦ ---
+        async function addWordToCloud() {
+            const term = document.getElementById('inp-word').value.trim();
+            const meaning = document.getElementById('inp-meaning').value.trim();
+            const type = document.getElementById('inp-type').value.trim();
+            if (!term || !meaning) return alert("Cần nhập Từ và Nghĩa!");
 
-        function saveData() { localStorage.setItem('vocabAppDBv3', JSON.stringify(db)); renderHome(); }
+            const btn = document.getElementById('btn-add-word');
+            btn.innerText = "Đang lưu..."; btn.disabled = true;
 
+            try {
+                const { error } = await _supabase.from('vocab_words').insert([
+                    { topic: currentTopicName, term: term, meaning: meaning, type: type }
+                ]);
+                if (error) throw error;
+                
+                // Xóa ô nhập và tải lại dữ liệu mới nhất
+                document.getElementById('inp-word').value = ''; 
+                document.getElementById('inp-meaning').value = ''; 
+                document.getElementById('inp-type').value = '';
+                await fetchDataFromCloud(); 
+                renderManager(); 
+            } catch (err) {
+                alert("Lỗi khi lưu lên mây: " + err.message);
+            } finally {
+                btn.innerText = "+ Lưu lên Đám mây"; btn.disabled = false;
+            }
+        }
+
+        // --- 3. HÀM XÓA TỪ KHỎI MÁY CHỦ ---
+        async function deleteWordFromCloud(wordId) {
+            showLoading("Đang xóa dữ liệu...");
+            try {
+                const { error } = await _supabase.from('vocab_words').delete().eq('id', wordId);
+                if (error) throw error;
+                
+                await fetchDataFromCloud();
+                renderManager();
+            } catch (err) {
+                alert("Lỗi khi xóa: " + err.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
+        /* --- XỬ LÝ GIAO DIỆN CHUNG --- */
         function switchView(viewId) {
             document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
             document.getElementById(`view-${viewId}`).classList.add('active');
@@ -200,54 +264,43 @@
             if (viewId === 'manager') renderManager();
         }
 
-        /* --- DASHBOARD & TẠO/XÓA CHỦ ĐỀ --- */
+        function showLoading(text) {
+            document.getElementById('loading-text').innerText = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        function hideLoading() { document.getElementById('loading-overlay').style.display = 'none'; }
+
         function renderHome() {
             const grid = document.getElementById('topics-grid');
             grid.innerHTML = '';
-            db.forEach(topic => {
+            cloudData.forEach((topic, index) => {
                 const card = document.createElement('div');
                 card.className = 'topic-card';
-                // Truyền tên chủ đề vào hàm xóa (xử lý chuỗi an toàn)
-                const safeName = topic.name.replace(/'/g, "\\'");
                 card.innerHTML = `
-                    <button class="btn-delete-topic" onclick="deleteTopic(${topic.id}, '${safeName}')" title="Xóa chủ đề này">✖</button>
                     <div>
                         <div class="topic-title">${topic.name}</div>
                         <div class="topic-stats">Tổng số: ${topic.words.length} từ vựng</div>
                     </div>
                     <div>
                         <div class="action-grid">
-                            <button class="btn btn-study" onclick="initStudy(${topic.id})">Flashcard</button>
-                            <button class="btn btn-typing" onclick="initTyping(${topic.id})">Gõ từ</button>
-                            <button class="btn btn-quiz" onclick="initQuiz(${topic.id})" style="grid-column: span 2;">Trắc nghiệm</button>
+                            <button class="btn btn-study" onclick="initStudy(${index})">Flashcard</button>
+                            <button class="btn btn-typing" onclick="initTyping(${index})">Gõ từ</button>
+                            <button class="btn btn-quiz" onclick="initQuiz(${index})" style="grid-column: span 2;">Trắc nghiệm</button>
                         </div>
-                        <button class="btn btn-manage" onclick="openManager(${topic.id})">Quản lý từ vựng</button>
+                        <button class="btn btn-manage" onclick="openManager(${index})">Quản lý từ vựng</button>
                     </div>
                 `;
                 grid.appendChild(card);
             });
         }
 
-        function createNewTopic() {
-            const name = prompt("Nhập tên chủ đề mới:");
-            if (name && name.trim() !== "") { db.push({ id: Date.now(), name: name, words: [] }); saveData(); }
+        function openManager(topicIndex) { 
+            currentTopicName = cloudData[topicIndex].name; 
+            switchView('manager'); 
         }
 
-        function deleteTopic(topicId, topicName) {
-            if(confirm(`⚠️ Nguy hiểm: Bạn có chắc chắn muốn xóa chủ đề "${topicName}" và toàn bộ từ vựng bên trong không?`)) {
-                // Xóa ở máy
-                db = db.filter(t => t.id !== topicId);
-                saveData();
-                // Kích hoạt hàm xóa trên đám mây
-                if (typeof xoaChuDeTrenCloud === 'function') xoaChuDeTrenCloud(topicName);
-            }
-        }
-
-        /* --- QUẢN LÝ TỪ VỰNG --- */
-        function openManager(topicId) { currentTopicId = topicId; switchView('manager'); }
-        
         function renderManager() {
-            const topic = db.find(t => t.id === currentTopicId);
+            const topic = cloudData.find(t => t.name === currentTopicName);
             document.getElementById('manager-topic-title').innerText = topic.name;
             document.getElementById('word-count').innerText = topic.words.length;
             const list = document.getElementById('word-list');
@@ -255,83 +308,38 @@
             [...topic.words].reverse().forEach(word => {
                 const item = document.createElement('div');
                 item.className = 'word-item';
-                const safeTerm = word.term.replace(/'/g, "\\'");
                 item.innerHTML = `<div class="word-info"><strong>${word.term}</strong><span>${word.meaning}</span></div>
-                                  <button class="btn" style="background: rgba(239,68,68,0.1); color: var(--danger);" onclick="deleteWord(${word.id}, '${safeTerm}')">Xóa</button>`;
+                                  <button class="btn" style="background: rgba(239,68,68,0.1); color: var(--danger);" onclick="deleteWordFromCloud(${word.id})">Xóa</button>`;
                 list.appendChild(item);
             });
         }
 
-        function addWordManually() {
-            const term = document.getElementById('inp-word').value.trim();
-            const meaning = document.getElementById('inp-meaning').value.trim();
-            const type = document.getElementById('inp-type').value.trim();
-            if (!term || !meaning) return alert("Cần nhập Từ và Nghĩa!");
-            
-            const topic = db.find(t => t.id === currentTopicId);
-            topic.words.push({ id: Date.now(), term, meaning, type });
-            
-            if (typeof luuTuVungLenCloud === 'function') luuTuVungLenCloud(topic.name, term, meaning, type);
-
-            document.getElementById('inp-word').value = ''; document.getElementById('inp-meaning').value = ''; document.getElementById('inp-type').value = '';
-            saveData(); renderManager();
-        }
-
-        function deleteWord(wordId, term) {
-            const topic = db.find(t => t.id === currentTopicId);
-            topic.words = topic.words.filter(w => w.id !== wordId);
-            
-            // Xóa đồng bộ trên đám mây
-            if (typeof xoaTuVungTrenCloud === 'function') xoaTuVungTrenCloud(topic.name, term);
-            
-            saveData(); renderManager();
-        }
-
-        document.addEventListener('change', function(e) {
-            if(e.target && e.target.id === 'csv-file') {
-                const file = e.target.files[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = function(event) {
-                    const lines = event.target.result.split('\n');
-                    const topic = db.find(t => t.id === currentTopicId);
-                    let added = 0;
-                    lines.forEach(line => {
-                        if(line.trim() === '') return;
-                        const parts = line.split(',').map(i => i.trim());
-                        if (parts.length >= 2) {
-                            topic.words.push({ id: Date.now() + Math.random(), term: parts[0], meaning: parts[1], type: parts[2] || "" });
-                            if (typeof luuTuVungLenCloud === 'function') luuTuVungLenCloud(topic.name, parts[0], parts[1], parts[2] || "");
-                            added++;
-                        }
-                    });
-                    alert(`Đã nhập và đồng bộ thành công ${added} từ vựng!`);
-                    e.target.value = ''; saveData(); renderManager();
-                };
-                reader.readAsText(file);
-            }
-        });
-
-        /* --- LOGIC CÁC CHẾ ĐỘ CHƠI --- */
-        function initMode(topicId, viewName) {
-            const topic = db.find(t => t.id === topicId);
+        /* --- LOGIC CÁC TRÒ CHƠI --- */
+        function initMode(topicIndex, viewName) {
+            const topic = cloudData[topicIndex];
             if (topic.words.length < 4 && viewName === 'quiz') return alert("Cần ít nhất 4 từ vựng trong chủ đề để chơi Trắc nghiệm!");
             if (topic.words.length === 0) return alert("Chủ đề trống!");
             activeQueue = [...topic.words].sort(() => Math.random() - 0.5);
-            totalItems = activeQueue.length; completedItems = 0; switchView(viewName);
+            totalItems = activeQueue.length;
+            completedItems = 0;
+            switchView(viewName);
         }
 
-        function initStudy(id) { initMode(id, 'study'); updateStudyCard(); }
+        // 1. Flashcard
+        function initStudy(idx) { initMode(idx, 'study'); updateStudyCard(); }
         function updateStudyCard() {
-            const card = document.getElementById('flashcard'); const controls = document.getElementById('study-controls');
+            const card = document.getElementById('flashcard');
+            const controls = document.getElementById('study-controls');
             if (activeQueue.length === 0) {
                 document.getElementById('study-word').innerHTML = `<span style="color: var(--success)">Hoàn thành!</span>`;
                 document.getElementById('study-type').innerText = ""; document.getElementById('study-meaning').innerText = "";
                 card.style.pointerEvents = 'none'; controls.classList.remove('visible');
-                document.getElementById('study-progress').style.width = '100%'; document.getElementById('study-status').innerText = "Đã xong!"; return;
+                document.getElementById('study-progress').style.width = '100%';
+                document.getElementById('study-status').innerText = "Đã xong!"; return;
             }
             currentItem = activeQueue[0];
-            document.getElementById('study-word').innerText = currentItem.term; document.getElementById('study-type').innerText = currentItem.type || "";
+            document.getElementById('study-word').innerText = currentItem.term;
+            document.getElementById('study-type').innerText = currentItem.type || "";
             document.getElementById('study-meaning').innerText = currentItem.meaning;
             document.getElementById('study-status').innerText = `Nhiệm vụ: ${completedItems}/${totalItems}`;
             document.getElementById('study-progress').style.width = `${(completedItems / totalItems) * 100}%`;
@@ -340,128 +348,108 @@
         function flipCard() {
             const card = document.getElementById('flashcard');
             if (!card.classList.contains('flipped') && activeQueue.length > 0) {
-                card.classList.add('flipped'); setTimeout(() => document.getElementById('study-controls').classList.add('visible'), 300);
+                card.classList.add('flipped');
+                setTimeout(() => document.getElementById('study-controls').classList.add('visible'), 300);
             }
         }
         function processStudyCard(remembered) {
-            activeQueue.shift(); if (remembered) completedItems++; else activeQueue.push(currentItem);
+            activeQueue.shift();
+            if (remembered) completedItems++; else activeQueue.push(currentItem);
             updateStudyCard();
         }
 
-        function initTyping(id) { initMode(id, 'typing'); updateTyping(); }
+        // 2. Typing
+        function initTyping(idx) { initMode(idx, 'typing'); updateTyping(); }
         function updateTyping() {
-            const inp = document.getElementById('typing-input'); const feedback = document.getElementById('typing-feedback');
-            document.getElementById('btn-check-typing').style.display = 'block'; document.getElementById('btn-next-typing').style.display = 'none';
+            const inp = document.getElementById('typing-input');
+            const feedback = document.getElementById('typing-feedback');
+            document.getElementById('btn-check-typing').style.display = 'block';
+            document.getElementById('btn-next-typing').style.display = 'none';
             inp.value = ''; inp.disabled = false; feedback.innerHTML = ''; inp.focus();
+
             if (activeQueue.length === 0) {
-                document.getElementById('typing-meaning').innerText = "Hoàn thành ôn tập!"; document.getElementById('typing-type').innerText = ""; inp.style.display = 'none';
-                document.getElementById('btn-check-typing').style.display = 'none'; document.getElementById('typing-progress').style.width = '100%'; return;
+                document.getElementById('typing-meaning').innerText = "Hoàn thành ôn tập!";
+                document.getElementById('typing-type').innerText = ""; inp.style.display = 'none';
+                document.getElementById('btn-check-typing').style.display = 'none';
+                document.getElementById('typing-progress').style.width = '100%'; return;
             }
-            currentItem = activeQueue[0]; inp.style.display = 'block';
-            document.getElementById('typing-meaning').innerText = currentItem.meaning; document.getElementById('typing-type').innerText = currentItem.type || "Nhập từ tiếng Anh tương ứng";
-            document.getElementById('typing-status').innerText = `Tiến độ: ${completedItems}/${totalItems}`; document.getElementById('typing-progress').style.width = `${(completedItems / totalItems) * 100}%`;
+            currentItem = activeQueue[0];
+            inp.style.display = 'block';
+            document.getElementById('typing-meaning').innerText = currentItem.meaning;
+            document.getElementById('typing-type').innerText = currentItem.type || "Nhập từ tiếng Anh tương ứng";
+            document.getElementById('typing-status').innerText = `Tiến độ: ${completedItems}/${totalItems}`;
+            document.getElementById('typing-progress').style.width = `${(completedItems / totalItems) * 100}%`;
         }
         function handleTypingEnter(e) { if (e.key === 'Enter') checkTyping(); }
         function checkTyping() {
-            const inp = document.getElementById('typing-input'); const ans = inp.value.trim().toLowerCase(); const correctAns = currentItem.term.toLowerCase();
+            const inp = document.getElementById('typing-input');
+            const ans = inp.value.trim().toLowerCase();
+            const correctAns = currentItem.term.toLowerCase();
             const feedback = document.getElementById('typing-feedback');
             if(!ans) return;
-            inp.disabled = true; document.getElementById('btn-check-typing').style.display = 'none'; document.getElementById('btn-next-typing').style.display = 'block';
-            if (ans === correctAns) { feedback.innerHTML = `<span class="text-success">✔ Chính xác!</span>`; activeQueue.shift(); completedItems++; } 
-            else { feedback.innerHTML = `<span class="text-danger">✘ Sai rồi. Đáp án đúng: <b>${currentItem.term}</b></span>`; activeQueue.shift(); activeQueue.push(currentItem); }
+            inp.disabled = true;
+            document.getElementById('btn-check-typing').style.display = 'none';
+            document.getElementById('btn-next-typing').style.display = 'block';
+
+            if (ans === correctAns) {
+                feedback.innerHTML = `<span class="text-success">✔ Chính xác!</span>`;
+                activeQueue.shift(); completedItems++;
+            } else {
+                feedback.innerHTML = `<span class="text-danger">✘ Sai rồi. Đáp án đúng: <b>${currentItem.term}</b></span>`;
+                activeQueue.shift(); activeQueue.push(currentItem); 
+            }
         }
         function nextTyping() { updateTyping(); }
 
+        // 3. Quiz
         let currentTopicWords = [];
-        function initQuiz(id) { currentTopicWords = db.find(t => t.id === id).words; initMode(id, 'quiz'); updateQuiz(); }
+        function initQuiz(idx) { 
+            currentTopicWords = cloudData[idx].words;
+            initMode(idx, 'quiz'); updateQuiz(); 
+        }
         function updateQuiz() {
-            const optionsContainer = document.getElementById('quiz-options'); optionsContainer.innerHTML = ''; document.getElementById('btn-next-quiz').style.display = 'none';
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            document.getElementById('btn-next-quiz').style.display = 'none';
             if (activeQueue.length === 0) {
-                document.getElementById('quiz-word').innerText = "Hoàn thành Quiz!"; document.getElementById('quiz-progress').style.width = '100%'; return;
+                document.getElementById('quiz-word').innerText = "Hoàn thành Quiz!";
+                document.getElementById('quiz-progress').style.width = '100%'; return;
             }
             currentItem = activeQueue[0];
-            document.getElementById('quiz-word').innerText = currentItem.term; document.getElementById('quiz-status').innerText = `Câu hỏi: ${completedItems}/${totalItems}`;
+            document.getElementById('quiz-word').innerText = currentItem.term;
+            document.getElementById('quiz-status').innerText = `Câu hỏi: ${completedItems}/${totalItems}`;
             document.getElementById('quiz-progress').style.width = `${(completedItems / totalItems) * 100}%`;
+
             let wrongAnswers = currentTopicWords.filter(w => w.id !== currentItem.id).sort(() => Math.random() - 0.5).slice(0, 3);
             let options = [currentItem, ...wrongAnswers].sort(() => Math.random() - 0.5);
+
             options.forEach(opt => {
-                const btn = document.createElement('button'); btn.className = 'quiz-btn'; btn.innerText = opt.meaning;
-                btn.onclick = () => checkQuiz(btn, opt.id === currentItem.id); optionsContainer.appendChild(btn);
+                const btn = document.createElement('button');
+                btn.className = 'quiz-btn';
+                btn.innerText = opt.meaning;
+                btn.onclick = () => checkQuiz(btn, opt.id === currentItem.id);
+                optionsContainer.appendChild(btn);
             });
         }
         function checkQuiz(btnElement, isCorrect) {
-            const buttons = document.querySelectorAll('.quiz-btn'); buttons.forEach(btn => btn.disabled = true); 
-            if (isCorrect) { btnElement.classList.add('correct'); activeQueue.shift(); completedItems++; setTimeout(updateQuiz, 800); } 
-            else { btnElement.classList.add('wrong'); buttons.forEach(btn => { if (btn.innerText === currentItem.meaning) btn.classList.add('correct'); });
-                activeQueue.shift(); activeQueue.push(currentItem); document.getElementById('btn-next-quiz').style.display = 'block'; }
+            const buttons = document.querySelectorAll('.quiz-btn');
+            buttons.forEach(btn => btn.disabled = true); 
+            if (isCorrect) {
+                btnElement.classList.add('correct');
+                activeQueue.shift(); completedItems++;
+                setTimeout(updateQuiz, 800); 
+            } else {
+                btnElement.classList.add('wrong');
+                buttons.forEach(btn => { if (btn.innerText === currentItem.meaning) btn.classList.add('correct'); });
+                activeQueue.shift(); activeQueue.push(currentItem); 
+                document.getElementById('btn-next-quiz').style.display = 'block'; 
+            }
         }
         function nextQuiz() { updateQuiz(); }
 
-        // ==========================================
-        // VẼ GIAO DIỆN NGAY LẬP TỨC ĐỂ CHỐNG TRẮNG MÀN HÌNH
-        // ==========================================
-        renderHome();
-    </script>
-
-    <!-- ========================================== -->
-    <!-- SCRIPT 2: CẤU HÌNH VÀ KẾT NỐI ĐÁM MÂY      -->
-    <!-- ========================================== -->
-    <script>
-        const SUPABASE_URL = 'https://xqtjqkrstfouccrlfixk.supabase.co';
-        const SUPABASE_KEY = 'sb_publishable_WLEQRFBWTT88MXEfWlJQ0Q_TpxCZpQp';
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
-        async function luuTuVungLenCloud(topic, term, meaning, type) {
-            try {
-                await supabase.from('vocab_words').insert([{ topic, term, meaning, type }]);
-                console.log(`🎉 Đã đồng bộ từ vựng "${term}" lên đám mây!`);
-            } catch (err) { console.error('❌ Lỗi khi đồng bộ:', err.message); }
-        }
-
-        async function xoaTuVungTrenCloud(topic, term) {
-            try {
-                await supabase.from('vocab_words').delete().match({ topic: topic, term: term });
-                console.log(`🗑️ Đã xóa từ vựng "${term}" khỏi đám mây!`);
-            } catch (err) { console.error('❌ Lỗi xóa từ vựng đám mây:', err.message); }
-        }
-
-        async function xoaChuDeTrenCloud(topic) {
-            try {
-                await supabase.from('vocab_words').delete().match({ topic: topic });
-                console.log(`🗑️ Đã xóa sạch chủ đề "${topic}" khỏi đám mây!`);
-            } catch (err) { console.error('❌ Lỗi xóa chủ đề đám mây:', err.message); }
-        }
-
-        async function dongBoDuLieuTuCloud() {
-            try {
-                console.log('🔄 Đang kéo dữ liệu mới nhất từ đám mây...');
-                const { data: rows, error } = await supabase.from('vocab_words').select('*').order('created_at', { ascending: true });
-                if (error) throw error;
-
-                if (!rows || rows.length === 0) {
-                    console.log('ℹ️ Đám mây hiện đang trống.'); return;
-                }
-
-                const groupDict = {};
-                rows.forEach(row => {
-                    if (!groupDict[row.topic]) { groupDict[row.topic] = { id: Date.now() + Math.random(), name: row.topic, words: [] }; }
-                    groupDict[row.topic].words.push({ id: row.id, term: row.term, meaning: row.meaning, type: row.type || '(n)' });
-                });
-
-                db = Object.values(groupDict);
-                localStorage.setItem('vocabAppDBv3', JSON.stringify(db));
-                console.log('✅ Cập nhật dữ liệu thành công!');
-                
-                // Làm mới lại giao diện với dữ liệu đám mây
-                renderHome(); 
-                if (currentTopicId) renderManager(); 
-            } catch (err) {
-                console.error('❌ Lỗi tải đám mây:', err.message);
-            }
-        }
-
-        // Tải dữ liệu ngầm ở chế độ nền
-        dongBoDuLieuTuCloud();
+        // --- KHỞI ĐỘNG ỨNG DỤNG ---
+        // Gọi hàm tải dữ liệu khi trang web vừa mở lên
+        fetchDataFromCloud();
     </script>
 </body>
 </html>
